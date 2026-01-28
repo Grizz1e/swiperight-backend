@@ -1,0 +1,172 @@
+import { createClient } from '@supabase/supabase-js';
+const MAX_ARTICLES = 200;
+let supabase;
+export function initSupabase() {
+    if (!supabase) {
+        const url = process.env.SUPABASE_URL;
+        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!url || !key) {
+            throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+        }
+        supabase = createClient(url, key);
+    }
+    return supabase;
+}
+export function getSupabase() {
+    if (!supabase) {
+        throw new Error('Supabase not initialized. Call initSupabase() first.');
+    }
+    return supabase;
+}
+// Sources CRUD
+export async function upsertSources(sources) {
+    const db = getSupabase();
+    const rows = sources.map(s => ({
+        id: s.id,
+        name: s.name,
+        homepage: s.homepage,
+        url: s.url,
+        category: s.category,
+        logo: s.logo || null,
+    }));
+    const { error } = await db
+        .from('sources')
+        .upsert(rows, { onConflict: 'id' });
+    if (error) {
+        console.error('Error upserting sources:', error);
+        throw error;
+    }
+}
+export async function getSourceEtag(sourceId) {
+    const db = getSupabase();
+    const { data } = await db
+        .from('sources')
+        .select('etag')
+        .eq('id', sourceId)
+        .single();
+    return data?.etag || null;
+}
+export async function updateSourceFetchInfo(sourceId, etag) {
+    const db = getSupabase();
+    await db
+        .from('sources')
+        .update({
+        last_fetched_at: new Date().toISOString(),
+        etag: etag
+    })
+        .eq('id', sourceId);
+}
+export async function getAllSources() {
+    const db = getSupabase();
+    const { data, error } = await db
+        .from('sources')
+        .select('*')
+        .order('name');
+    if (error)
+        throw error;
+    return data || [];
+}
+// Articles CRUD
+export async function upsertArticles(articles) {
+    if (articles.length === 0)
+        return 0;
+    const db = getSupabase();
+    const rows = articles.map(a => ({
+        title: a.title,
+        description: a.description,
+        link: a.link,
+        pub_date: a.pubDate.toISOString(),
+        thumbnail: a.thumbnail,
+        source_id: a.sourceId,
+    }));
+    const { data, error } = await db
+        .from('articles')
+        .upsert(rows, { onConflict: 'link', ignoreDuplicates: true })
+        .select('id');
+    if (error) {
+        console.error('Error upserting articles:', error);
+        throw error;
+    }
+    return data?.length || 0;
+}
+export async function cleanupOldArticles() {
+    const db = getSupabase();
+    // Get IDs of articles to keep (200 most recent)
+    const { data: keepArticles } = await db
+        .from('articles')
+        .select('id')
+        .order('pub_date', { ascending: false })
+        .limit(MAX_ARTICLES);
+    if (!keepArticles || keepArticles.length < MAX_ARTICLES) {
+        return 0; // Not enough articles to need cleanup
+    }
+    const keepIds = keepArticles.map(a => a.id);
+    // Delete articles not in the keep list
+    const { data: deleted, error } = await db
+        .from('articles')
+        .delete()
+        .not('id', 'in', `(${keepIds.join(',')})`)
+        .select('id');
+    if (error) {
+        console.error('Error cleaning up articles:', error);
+        return 0;
+    }
+    return deleted?.length || 0;
+}
+export async function getArticles(options = {}) {
+    const db = getSupabase();
+    const { limit = 20, offset = 0, category, sources, since, after, } = options;
+    const safeLimit = Math.min(Math.max(1, limit), 50);
+    let query = db
+        .from('articles')
+        .select(`
+      id,
+      title,
+      description,
+      link,
+      pub_date,
+      thumbnail,
+      source_id,
+      created_at,
+      sources!inner (
+        id,
+        name,
+        homepage,
+        category,
+        logo
+      )
+    `)
+        .order('pub_date', { ascending: false })
+        .range(offset, offset + safeLimit - 1);
+    if (category) {
+        query = query.eq('sources.category', category);
+    }
+    if (sources && sources.length > 0) {
+        query = query.in('source_id', sources);
+    }
+    if (since) {
+        query = query.gte('pub_date', since.toISOString());
+    }
+    // Cursor-based pagination: get articles older than the cursor article
+    if (after) {
+        // First get the pub_date of the cursor article
+        const { data: cursorArticle } = await db
+            .from('articles')
+            .select('pub_date')
+            .eq('id', after)
+            .single();
+        if (cursorArticle) {
+            query = query.lt('pub_date', cursorArticle.pub_date);
+        }
+    }
+    const { data, error, count } = await query;
+    if (error)
+        throw error;
+    const articles = data || [];
+    const lastId = articles.length > 0 ? articles[articles.length - 1].id : null;
+    return {
+        articles,
+        lastId,
+        hasMore: articles.length === safeLimit,
+    };
+}
