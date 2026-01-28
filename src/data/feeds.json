@@ -1,0 +1,84 @@
+{
+  "feeds": [
+    {
+      "id": "ratopati",
+      "name": "Ratopati",
+      "homepage": "https://ratopati.com",
+      "url": "https://ratopati.com/feed",
+      "category": "nepali",
+      "logo": "https://npcdn.ratopati.com/media/setting/fav_WteZzVu6I7.png"
+    },
+    {
+      "id": "setopati",
+      "name": "Setopati",
+      "homepage": "https://setopati.com",
+      "url": "https://setopati.com/feed",
+      "category": "nepali",
+      "logo": "https://www.setopati.com/themes/setopati/images/logo-icon.svg"
+    },
+    {
+      "id": "onlinekhabar",
+      "name": "Online Khabar",
+      "homepage": "https://onlinekhabar.com",
+      "url": "https://onlinekhabar.com/feed",
+      "category": "nepali",
+      "logo": ""
+    },
+    {
+      "id": "techpana",
+      "name": "TechPana",
+      "homepage": "https://techpana.com",
+      "url": "https://techpana.com/feed",
+      "category": "nepali",
+      "logo": "https://techpana.prixacdn.net/static/assets/images/footerlogo-crop.png"
+    },
+    {
+      "id": "bbc-nepali",
+      "name": "BBC Nepali",
+      "homepage": "https://bbc.com/nepali",
+      "url": "https://feeds.bbci.co.uk/nepali/rss.xml",
+      "category": "nepali",
+      "logo": "https://static.files.bbci.co.uk/ws/simorgh-assets/public/nepali/images/icons/icon-512x512.png"
+    },
+    {
+      "id": "nytimes-world",
+      "name": "NY Times World",
+      "homepage": "https://www.nytimes.com",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+      "category": "english",
+      "logo": ""
+    },
+    {
+      "id": "bbc-world",
+      "name": "BBC World",
+      "homepage": "https://www.bbc.com",
+      "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
+      "category": "english",
+      "logo": ""
+    },
+    {
+      "id": "theverge",
+      "name": "The Verge",
+      "homepage": "https://www.theverge.com",
+      "url": "https://www.theverge.com/rss/index.xml",
+      "category": "english",
+      "logo": ""
+    },
+    {
+      "id": "washingtonpost",
+      "name": "The Washington Post",
+      "homepage": "https://www.washingtonpost.com",
+      "url": "https://feeds.washingtonpost.com/rss/world",
+      "category": "english",
+      "logo": "https://www.washingtonpost.com/favicon.svg"
+    },
+    {
+      "id": "un-news",
+      "name": "UN News",
+      "homepage": "https://www.un.org",
+      "url": "https://news.un.org/feed/subscribe/en/news/region/global/feed/rss.xml",
+      "category": "english",
+      "logo": "https://news.un.org/en/themes/custom/un_base_theme/favicon.ico"
+    }
+  ]
+}
