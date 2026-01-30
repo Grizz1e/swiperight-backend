@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-const MAX_ARTICLES = 200;
+const ARTICLE_MAX_AGE_HOURS = 24;
 let supabase;
 export function initSupabase() {
     if (!supabase) {
@@ -91,24 +91,17 @@ export async function upsertArticles(articles) {
 }
 export async function cleanupOldArticles() {
     const db = getSupabase();
-    // Get IDs of articles to keep (200 most recent)
-    const { data: keepArticles } = await db
-        .from('articles')
-        .select('id')
-        .order('pub_date', { ascending: false })
-        .limit(MAX_ARTICLES);
-    if (!keepArticles || keepArticles.length < MAX_ARTICLES) {
-        return 0; // Not enough articles to need cleanup
-    }
-    const keepIds = keepArticles.map(a => a.id);
-    // Delete articles not in the keep list
+    // Calculate the cutoff time (24 hours ago)
+    const cutoffDate = new Date();
+    cutoffDate.setHours(cutoffDate.getHours() - ARTICLE_MAX_AGE_HOURS);
+    // Delete articles older than the cutoff
     const { data: deleted, error } = await db
         .from('articles')
         .delete()
-        .not('id', 'in', `(${keepIds.join(',')})`)
+        .lt('pub_date', cutoffDate.toISOString())
         .select('id');
     if (error) {
-        console.error('Error cleaning up articles:', error);
+        console.error('Error cleaning up old articles:', error);
         return 0;
     }
     return deleted?.length || 0;
