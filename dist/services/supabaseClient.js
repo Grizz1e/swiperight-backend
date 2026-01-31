@@ -26,7 +26,7 @@ export async function upsertSources(sources) {
         name: s.name,
         homepage: s.homepage,
         url: s.url,
-        category: s.category,
+        locale: s.locale,
         logo: s.logo || null,
     }));
     const { error } = await db
@@ -78,6 +78,7 @@ export async function upsertArticles(articles) {
         pub_date: a.pubDate.toISOString(),
         thumbnail: a.thumbnail,
         source_id: a.sourceId,
+        categories: a.categories.length > 0 ? a.categories : null,
     }));
     const { data, error } = await db
         .from('articles')
@@ -108,7 +109,7 @@ export async function cleanupOldArticles() {
 }
 export async function getArticles(options = {}) {
     const db = getSupabase();
-    const { limit = 20, offset = 0, category, sources, since, after, } = options;
+    const { limit = 20, offset = 0, category, locale, sources, since, after, } = options;
     const safeLimit = Math.min(Math.max(1, limit), 50);
     let query = db
         .from('articles')
@@ -120,19 +121,25 @@ export async function getArticles(options = {}) {
       pub_date,
       thumbnail,
       source_id,
+      categories,
       created_at,
       sources!inner (
         id,
         name,
         homepage,
-        category,
+        locale,
         logo
       )
     `)
         .order('pub_date', { ascending: false })
         .range(offset, offset + safeLimit - 1);
+    // Filter by article category (uses PostgreSQL array contains)
     if (category) {
-        query = query.eq('sources.category', category);
+        query = query.contains('categories', [category]);
+    }
+    // Filter by source locale
+    if (locale) {
+        query = query.eq('sources.locale', locale);
     }
     if (sources && sources.length > 0) {
         query = query.in('source_id', sources);

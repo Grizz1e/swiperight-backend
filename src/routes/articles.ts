@@ -8,6 +8,7 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 20;
     const category = req.query.category as string | undefined;
+    const locale = req.query.locale as string | undefined;
     const sourcesParam = req.query.sources as string | undefined;
     const sinceParam = req.query.since as string | undefined;
     const after = req.query.after as string | undefined; // Cursor for pagination
@@ -18,6 +19,7 @@ router.get('/', async (req: Request, res: Response) => {
     const { articles, lastId, hasMore } = await getArticles({
       limit,
       category,
+      locale,
       sources,
       since: since && !isNaN(since.getTime()) ? since : undefined,
       after,

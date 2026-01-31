@@ -107,6 +107,36 @@ export function parseRSSFeed(xmlText, source) {
                     const contentHtml = getText(item['content:encoded']) || getText(item.content) || rawDesc;
                     thumbnail = extractImageFromContent(contentHtml);
                 }
+                // Categories extraction - supports multiple categories
+                const categories = [];
+                if (item.category) {
+                    if (Array.isArray(item.category)) {
+                        // Multiple categories in RSS 2.0
+                        for (const cat of item.category) {
+                            const catText = typeof cat === 'string' ? cat : getText(cat);
+                            if (catText)
+                                categories.push(stripHtml(catText));
+                        }
+                    }
+                    else {
+                        // Single category
+                        const catText = typeof item.category === 'string' ? item.category : getText(item.category);
+                        if (catText)
+                            categories.push(stripHtml(catText));
+                    }
+                }
+                // Atom format uses category with @_term attribute
+                if (item.category && !categories.length) {
+                    if (Array.isArray(item.category)) {
+                        for (const cat of item.category) {
+                            if (cat['@_term'])
+                                categories.push(cat['@_term']);
+                        }
+                    }
+                    else if (item.category['@_term']) {
+                        categories.push(item.category['@_term']);
+                    }
+                }
                 return {
                     title,
                     description: description || null,
@@ -114,6 +144,7 @@ export function parseRSSFeed(xmlText, source) {
                     pubDate,
                     thumbnail: thumbnail || null,
                     sourceId: source.id,
+                    categories,
                 };
             }
             catch (err) {

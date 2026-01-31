@@ -69,7 +69,8 @@ async function start() {
             console.log(`Server running on http://localhost:${PORT}`);
             console.log('Available endpoints:');
             console.log('  GET /api/articles');
-            console.log('  GET /api/articles?category=nepali');
+            console.log('  GET /api/articles?locale=nepali');
+            console.log('  GET /api/articles?category=sports');
             console.log('  GET /api/articles?sources=ratopati,setopati');
             console.log('  GET /api/articles?since=2024-01-01T00:00:00Z');
             console.log('  GET /api/sources');

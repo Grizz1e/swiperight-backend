@@ -67,7 +67,7 @@ export async function fetchAllFeeds(): Promise<{ results: FetchResult[]; totalAr
     name: row.name,
     homepage: row.homepage,
     url: row.url,
-    category: row.category,
+    locale: row.locale,
     logo: row.logo || undefined,
   }));
   

@@ -42,7 +42,7 @@ export async function fetchAllFeeds() {
         name: row.name,
         homepage: row.homepage,
         url: row.url,
-        category: row.category,
+        locale: row.locale,
         logo: row.logo || undefined,
     }));
     const results = [];

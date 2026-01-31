@@ -6,6 +6,7 @@ router.get('/', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 20;
         const category = req.query.category;
+        const locale = req.query.locale;
         const sourcesParam = req.query.sources;
         const sinceParam = req.query.since;
         const after = req.query.after; // Cursor for pagination
@@ -14,6 +15,7 @@ router.get('/', async (req, res) => {
         const { articles, lastId, hasMore } = await getArticles({
             limit,
             category,
+            locale,
             sources,
             since: since && !isNaN(since.getTime()) ? since : undefined,
             after,

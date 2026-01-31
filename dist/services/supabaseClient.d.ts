@@ -12,6 +12,7 @@ export interface GetArticlesOptions {
     limit?: number;
     offset?: number;
     category?: string;
+    locale?: string;
     sources?: string[];
     since?: Date;
     after?: string;
@@ -25,12 +26,13 @@ export declare function getArticles(options?: GetArticlesOptions): Promise<{
         pub_date: any;
         thumbnail: any;
         source_id: any;
+        categories: any;
         created_at: any;
         sources: {
             id: any;
             name: any;
             homepage: any;
-            category: any;
+            locale: any;
             logo: any;
         }[];
     }[];

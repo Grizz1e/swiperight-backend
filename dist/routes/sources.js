@@ -89,10 +89,10 @@ router.post('/', requireApiKey, async (req, res) => {
                 typeof source.name !== 'string' ||
                 typeof source.url !== 'string' ||
                 typeof source.homepage !== 'string' ||
-                typeof source.category !== 'string') {
+                typeof source.locale !== 'string') {
                 res.status(400).json({
                     success: false,
-                    error: 'Each source must have id, name, url, homepage, and category (all strings)',
+                    error: 'Each source must have id, name, url, homepage, and locale (all strings)',
                 });
                 return;
             }
@@ -115,7 +115,7 @@ router.post('/', requireApiKey, async (req, res) => {
                 name: sanitizeString(source.name, 200),
                 url: source.url,
                 homepage: source.homepage,
-                category: sanitizeString(source.category, 50),
+                locale: sanitizeString(source.locale, 50),
                 logo: typeof source.logo === 'string' && isValidFeedUrl(source.logo) ? source.logo : undefined,
             });
         }

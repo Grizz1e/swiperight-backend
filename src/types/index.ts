@@ -3,7 +3,7 @@ export interface FeedSource {
   name: string;
   homepage: string;
   url: string;
-  category: string;
+  locale: string;
   logo?: string;
   lastFetchedAt?: Date;
   etag?: string;
@@ -17,6 +17,7 @@ export interface Article {
   pubDate: Date;
   thumbnail: string | null;
   sourceId: string;
+  categories: string[];
 }
 
 export interface ArticleRow {
@@ -27,6 +28,7 @@ export interface ArticleRow {
   pub_date: string;
   thumbnail: string | null;
   source_id: string;
+  categories: string[] | null;
   created_at: string;
 }
 
@@ -35,7 +37,7 @@ export interface SourceRow {
   name: string;
   homepage: string;
   url: string;
-  category: string;
+  locale: string;
   logo: string | null;
   last_fetched_at: string | null;
   etag: string | null;
