@@ -1,8 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { getAllSources, upsertSources } from '../services/supabaseClient.js';
 import { FeedSource } from '../types/index.js';
+import cors from 'cors';
 
 const router = Router();
+router.use(cors());
 
 // API Key middleware for protected routes
 const requireApiKey = (req: Request, res: Response, next: NextFunction): void => {
