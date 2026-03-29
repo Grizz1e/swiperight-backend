@@ -111,62 +111,112 @@ export async function getArticles(options = {}) {
     const db = getSupabase();
     const { limit = 20, offset = 0, category, locale, sources, since, after, } = options;
     const safeLimit = Math.min(Math.max(1, limit), 50);
-    let query = db
-        .from('articles')
-        .select(`
-      id,
-      title,
-      description,
-      link,
-      pub_date,
-      thumbnail,
-      source_id,
-      categories,
-      created_at,
-      sources!inner (
-        id,
-        name,
-        homepage,
-        locale,
-        logo
-      )
-    `)
-        .order('pub_date', { ascending: false })
-        .range(offset, offset + safeLimit - 1);
-    // Filter by article category (uses PostgreSQL array contains)
-    if (category) {
-        query = query.contains('categories', [category]);
-    }
-    // Filter by source locale
-    if (locale) {
-        query = query.eq('sources.locale', locale);
-    }
-    if (sources && sources.length > 0) {
-        query = query.in('source_id', sources);
-    }
-    if (since) {
-        query = query.gte('pub_date', since.toISOString());
-    }
+    let cursorPubDate = null;
     // Cursor-based pagination: get articles older than the cursor article
     if (after) {
-        // First get the pub_date of the cursor article
         const { data: cursorArticle } = await db
             .from('articles')
             .select('pub_date')
             .eq('id', after)
             .single();
-        if (cursorArticle) {
-            query = query.lt('pub_date', cursorArticle.pub_date);
+        cursorPubDate = cursorArticle?.pub_date ?? null;
+    }
+    const buildQuery = (start, end) => {
+        let query = db
+            .from('articles')
+            .select(`
+        id,
+        title,
+        description,
+        link,
+        pub_date,
+        thumbnail,
+        source_id,
+        categories,
+        created_at,
+        sources!inner (
+          id,
+          name,
+          homepage,
+          locale,
+          logo
+        )
+      `)
+            .order('pub_date', { ascending: false })
+            .range(start, end);
+        if (locale) {
+            query = query.eq('sources.locale', locale);
+        }
+        if (sources && sources.length > 0) {
+            query = query.in('source_id', sources);
+        }
+        if (since) {
+            query = query.gte('pub_date', since.toISOString());
+        }
+        if (cursorPubDate) {
+            query = query.lt('pub_date', cursorPubDate);
+        }
+        return query;
+    };
+    const normalizedCategory = category?.trim().toLowerCase();
+    // Fast path for requests without category filtering.
+    if (!normalizedCategory) {
+        const { data, error } = await buildQuery(offset, offset + safeLimit - 1);
+        if (error)
+            throw error;
+        const articles = data || [];
+        const lastId = articles.length > 0 ? articles[articles.length - 1].id : null;
+        return {
+            articles,
+            lastId,
+            hasMore: articles.length === safeLimit,
+        };
+    }
+    const categoryTokens = normalizedCategory.split(/\s+/).filter(Boolean);
+    // Case-insensitive matching for category arrays while preserving pagination.
+    const pageSize = safeLimit;
+    let scanOffset = offset;
+    let reachedEnd = false;
+    const matched = [];
+    while (!reachedEnd && matched.length < safeLimit + 1) {
+        const { data, error } = await buildQuery(scanOffset, scanOffset + pageSize - 1);
+        if (error)
+            throw error;
+        const batch = data || [];
+        if (batch.length === 0) {
+            reachedEnd = true;
+            break;
+        }
+        for (const article of batch) {
+            const rawCategories = article.categories;
+            const categoryValues = Array.isArray(rawCategories)
+                ? rawCategories
+                : typeof rawCategories === 'string'
+                    ? [rawCategories]
+                    : [];
+            const normalizedCategoryText = categoryValues
+                .filter((cat) => typeof cat === 'string')
+                .map(cat => cat.trim().toLowerCase())
+                .filter(Boolean)
+                .join(' ');
+            const hasCategory = normalizedCategoryText.length > 0 &&
+                categoryTokens.every(token => normalizedCategoryText.includes(token));
+            if (hasCategory) {
+                matched.push(article);
+                if (matched.length >= safeLimit + 1)
+                    break;
+            }
+        }
+        scanOffset += batch.length;
+        if (batch.length < pageSize) {
+            reachedEnd = true;
         }
     }
-    const { data, error, count } = await query;
-    if (error)
-        throw error;
-    const articles = data || [];
+    const articles = matched.slice(0, safeLimit);
     const lastId = articles.length > 0 ? articles[articles.length - 1].id : null;
     return {
         articles,
         lastId,
-        hasMore: articles.length === safeLimit,
+        hasMore: matched.length > safeLimit,
     };
 }

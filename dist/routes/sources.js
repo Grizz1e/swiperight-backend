@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getAllSources, upsertSources } from '../services/supabaseClient.js';
+import cors from 'cors';
 const router = Router();
+router.use(cors());
 // API Key middleware for protected routes
 const requireApiKey = (req, res, next) => {
     const apiKey = req.headers['x-api-key'] || req.headers['authorization']?.replace('Bearer ', '');

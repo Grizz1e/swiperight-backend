@@ -18,24 +18,7 @@ export interface GetArticlesOptions {
     after?: string;
 }
 export declare function getArticles(options?: GetArticlesOptions): Promise<{
-    articles: {
-        id: any;
-        title: any;
-        description: any;
-        link: any;
-        pub_date: any;
-        thumbnail: any;
-        source_id: any;
-        categories: any;
-        created_at: any;
-        sources: {
-            id: any;
-            name: any;
-            homepage: any;
-            locale: any;
-            logo: any;
-        }[];
-    }[];
+    articles: any[];
     lastId: any;
     hasMore: boolean;
 }>;

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { getArticles } from '../services/supabaseClient.js';
+import cors from 'cors';
 const router = Router();
+router.use(cors());
 // GET /api/articles
 router.get('/', async (req, res) => {
     try {

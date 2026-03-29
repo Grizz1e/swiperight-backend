@@ -65,7 +65,7 @@ export function parseRSSFeed(xmlText: string, source: FeedSource): Article[] {
         const title = stripHtml(getText(item.title) || 'No title');
         
         // Description
-        const rawDesc = getText(item.description) || getText(item.summary) || getText(item.content) || '';
+        const rawDesc = getText(item.content) || getText(item.summary) || getText(item.description)  || '';
         const description = stripHtml(rawDesc);
         
         // Link - handle both RSS and Atom formats
